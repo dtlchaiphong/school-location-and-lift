@@ -13,27 +13,8 @@
   <meta name="apple-mobile-web-app-title" content="DTLC Mobile">
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3448/3448339.png">
 
-  <!-- MANIFEST INLINE (DATA URI) -->
-  <link rel="manifest" href='data:application/manifest+json,{
-    "name": "DTLC Mobile Hub",
-    "short_name": "DTLC Mobile",
-    "start_url": "./",
-    "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#d32f2f",
-    "icons": [
-      {
-        "src": "https://cdn-icons-png.flaticon.com/512/3448/3448339.png",
-        "sizes": "192x192",
-        "type": "image/png"
-      },
-      {
-        "src": "https://cdn-icons-png.flaticon.com/512/3448/3448339.png",
-        "sizes": "512x512",
-        "type": "image/png"
-      }
-    ]
-  }'>
+  <!-- LIÊN KẾT ĐẾN CÁC FILE VẬT LÝ BẮT BUỘC -->
+  <link rel="manifest" href="./manifest.json">
 
   <!-- Google Fonts & Font Awesome Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -52,7 +33,83 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
-    body { display: flex; height: 100vh; height: 100dvh; overflow: hidden; background: var(--bg-color); color: var(--text-main); }
+    body { display: flex; height: 100vh; height: 100dvh; overflow: hidden; background: var(--bg-color); color: var(--text-main); flex-direction: column; }
+
+    /* BẢNG BANNER CÀI ĐẶT APP (TOP BANNER) */
+    .pwa-install-banner {
+      display: none; /* Chỉ hiện khi có điều kiện cài đặt */
+      align-items: center;
+      justify-content: space-between;
+      background: var(--primary-red);
+      color: #ffffff;
+      padding: 10px 16px;
+      font-size: 13.5px;
+      font-weight: 600;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      z-index: 9999;
+      position: relative;
+    }
+
+    .pwa-banner-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .pwa-banner-content i {
+      font-size: 20px;
+      animation: bounce 2s infinite;
+    }
+
+    .pwa-banner-text p {
+      font-size: 11px;
+      font-weight: 400;
+      opacity: 0.9;
+    }
+
+    .pwa-banner-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pwa-btn-install {
+      background: #ffffff;
+      color: var(--primary-red);
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transition: all 0.2s;
+    }
+    .pwa-btn-install:active { background: #f1f1f1; }
+
+    .pwa-btn-close {
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-5px); }
+      60% { transform: translateY(-3px); }
+    }
+
+    /* GIAO DIỆN CHÍNH */
+    .app-container {
+      display: flex;
+      flex: 1;
+      width: 100%;
+      height: calc(100% - 52px); /* Trừ đi banner nếu có */
+      overflow: hidden;
+    }
 
     /* Mobile Overlay Backdrop */
     .sidebar-overlay {
@@ -250,21 +307,6 @@
       color: var(--text-main);
     }
 
-    /* Nút Install PWA trên Header (Tự hiện khi thiết bị hỗ trợ) */
-    .install-pwa-btn {
-      display: none;
-      align-items: center;
-      gap: 6px;
-      background: var(--primary-red);
-      color: #ffffff;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
     /* iFrame Display Area */
     .content-area {
       flex: 1;
@@ -302,82 +344,96 @@
 </head>
 <body>
 
-  <!-- Mobile Overlay Backdrop -->
-  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
-
-  <!-- SIDEBAR MOBILE UTILITY -->
-  <aside id="sidebar">
-    <div class="sidebar-header">
-      <div class="brand">
-        <i class="fa-solid fa-mobile-screen"></i>
-        <span>DTLC Mobile Hub</span>
-        <span class="brand-badge">PUBLIC</span>
+  <!-- BẢNG GỢI Ý CÀI ĐẶT APP (TOP BANNER) -->
+  <div class="pwa-install-banner" id="pwaInstallBanner">
+    <div class="pwa-banner-content">
+      <i class="fa-solid fa-cloud-arrow-down"></i>
+      <div class="pwa-banner-text">
+        <span>Install App on Your Phone</span>
+        <p>Get fast access to LIFT and Directory directly from your home screen!</p>
       </div>
-      <button class="close-sidebar-btn" onclick="closeSidebar()" aria-label="Close menu">
+    </div>
+    <div class="pwa-banner-actions">
+      <button class="pwa-btn-install" onclick="installPWA()">Install</button>
+      <button class="pwa-btn-close" onclick="closeInstallBanner()" aria-label="Dismiss">
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
+  </div>
 
-    <!-- Mobile Navigation List -->
-    <ul class="menu-list">
-      <li>
-        <button class="menu-item active" onclick="switchTab(this, 'app1', 'https://script.google.com/macros/s/AKfycbzPYHWYrsi67Y_ccaxWUwyP_Gv1NdWp8fKR7iuWG9ZtIM_tjgqDhX9kOHyl2xaxgM7wLw/exec')">
-          <i class="fa-solid fa-car-side"></i>
-          <span>LIFT SCHEDULE</span>
-        </button>
-      </li>
-      <li>
-        <button class="menu-item" onclick="switchTab(this, 'app2', 'https://script.google.com/macros/s/AKfycbxuGwttRNWhWft0ku_89g-n_zN9dfR65m5EWw99uAAtQSrJEU4Fcg7hlA7y2UBViMh7/exec?page=schools')">
-          <i class="fa-solid fa-map-location-dot"></i>
-          <span>SCHOOL LOCATION</span>
-        </button>
-      </li>
-    </ul>
+  <div class="app-container">
+    <!-- Mobile Overlay Backdrop -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
-    <!-- Quick Actions Footer -->
-    <div class="sidebar-footer">
-      <button class="action-btn" id="installBtnSidebar" onclick="installPWA()" style="display: none; background: var(--primary-red-light); color: var(--primary-red); border-color: rgba(211, 47, 47, 0.2);">
-        <i class="fa-solid fa-download"></i>
-        <span>Install App to Phone</span>
-      </button>
-      <button class="action-btn" onclick="reloadCurrentApp()">
-        <i class="fa-solid fa-rotate-right" style="color: var(--primary-red);"></i>
-        <span>Refresh Page</span>
-      </button>
-      <button class="action-btn" onclick="openInNewTab()">
-        <i class="fa-solid fa-arrow-up-right-from-square" style="color: var(--primary-red);"></i>
-        <span>Open in New Tab</span>
-      </button>
-    </div>
-  </aside>
-
-  <!-- MAIN WORKSPACE -->
-  <main>
-    <!-- Top Mobile Header Bar -->
-    <div class="mobile-header">
-      <button class="menu-toggle-btn" onclick="openSidebar()" title="Open Menu">
-        <i class="fa-solid fa-bars"></i>
-      </button>
-      
-      <div class="mobile-actions">
-        <button class="install-pwa-btn" id="installBtnHeader" onclick="installPWA()">
-          <i class="fa-solid fa-download"></i> Install App
-        </button>
-        <button class="icon-btn-mobile" onclick="reloadCurrentApp()" title="Refresh Page">
-          <i class="fa-solid fa-rotate-right"></i>
-        </button>
-        <button class="icon-btn-mobile" onclick="openInNewTab()" title="Open in New Tab">
-          <i class="fa-solid fa-arrow-up-right-from-square"></i>
+    <!-- SIDEBAR MOBILE UTILITY -->
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <div class="brand">
+          <i class="fa-solid fa-mobile-screen"></i>
+          <span>DTLC Mobile Hub</span>
+          <span class="brand-badge">PUBLIC</span>
+        </div>
+        <button class="close-sidebar-btn" onclick="closeSidebar()" aria-label="Close menu">
+          <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
-    </div>
 
-    <!-- iFrame Container Area -->
-    <div class="content-area">
-      <iframe id="app1" class="tab-iframe active" src="https://script.google.com/macros/s/AKfycbzPYHWYrsi67Y_ccaxWUwyP_Gv1NdWp8fKR7iuWG9ZtIM_tjgqDhX9kOHyl2xaxgM7wLw/exec"></iframe>
-      <iframe id="app2" class="tab-iframe"></iframe>
-    </div>
-  </main>
+      <!-- Mobile Navigation List -->
+      <ul class="menu-list">
+        <li>
+          <button class="menu-item active" onclick="switchTab(this, 'app1', 'https://script.google.com/macros/s/AKfycbzPYHWYrsi67Y_ccaxWUwyP_Gv1NdWp8fKR7iuWG9ZtIM_tjgqDhX9kOHyl2xaxgM7wLw/exec')">
+            <i class="fa-solid fa-car-side"></i>
+            <span>LIFT SCHEDULE</span>
+          </button>
+        </li>
+        <li>
+          <button class="menu-item" onclick="switchTab(this, 'app2', 'https://script.google.com/macros/s/AKfycbxuGwttRNWhWft0ku_89g-n_zN9dfR65m5EWw99uAAtQSrJEU4Fcg7hlA7y2UBViMh7/exec?page=schools')">
+            <i class="fa-solid fa-map-location-dot"></i>
+            <span>SCHOOL LOCATION</span>
+          </button>
+        </li>
+      </ul>
+
+      <!-- Quick Actions Footer -->
+      <div class="sidebar-footer">
+        <button class="action-btn" onclick="reloadCurrentApp()">
+          <i class="fa-solid fa-rotate-right" style="color: var(--primary-red);"></i>
+          <span>Refresh Page</span>
+        </button>
+        <button class="action-btn" onclick="openInNewTab()">
+          <i class="fa-solid fa-arrow-up-right-from-square" style="color: var(--primary-red);"></i>
+          <span>Open in New Tab</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN WORKSPACE -->
+    <main>
+      <!-- Top Mobile Header Bar -->
+      <div class="mobile-header">
+        <button class="menu-toggle-btn" onclick="openSidebar()" title="Open Menu">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        
+        <div class="mobile-actions">
+          <button class="icon-btn-mobile" onclick="reloadCurrentApp()" title="Refresh Page">
+            <i class="fa-solid fa-rotate-right"></i>
+          </button>
+          <button class="icon-btn-mobile" onclick="openInNewTab()" title="Open in New Tab">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- iFrame Container Area -->
+      <div class="content-area">
+        <!-- App 1: Lift Schedule Mobile -->
+        <iframe id="app1" class="tab-iframe active" src="https://script.google.com/macros/s/AKfycbzPYHWYrsi67Y_ccaxWUwyP_Gv1NdWp8fKR7iuWG9ZtIM_tjgqDhX9kOHyl2xaxgM7wLw/exec"></iframe>
+        <!-- App 2: School Location Directory (Lazy Loaded) -->
+        <iframe id="app2" class="tab-iframe"></iframe>
+      </div>
+    </main>
+  </div>
 
   <script>
     let activeAppId = 'app1';
@@ -399,20 +455,26 @@
       activeAppId = tabId;
       activeAppUrl = appUrl;
 
+      // 1. Update active tab state
       document.querySelectorAll('.menu-item').forEach(btn => btn.classList.remove('active'));
       btnElem.classList.add('active');
 
+      // 2. Switch iFrame visibility
       document.querySelectorAll('.tab-iframe').forEach(iframe => iframe.classList.remove('active'));
       const targetIframe = document.getElementById(tabId);
       
+      // Lazy Load: Only set source on first selection
       if (appUrl && !targetIframe.getAttribute('src')) {
         targetIframe.setAttribute('src', appUrl);
       }
       
       targetIframe.classList.add('active');
+
+      // 3. Close sidebar on Mobile selection
       closeSidebar();
     }
 
+    // Reload Active Application
     function reloadCurrentApp() {
       const currentIframe = document.getElementById(activeAppId);
       if (currentIframe && currentIframe.getAttribute('src')) {
@@ -420,6 +482,7 @@
       }
     }
 
+    // Open Application in New Independent Tab
     function openInNewTab() {
       if (activeAppUrl) {
         window.open(activeAppUrl, '_blank');
@@ -435,9 +498,10 @@
       e.preventDefault();
       deferredPrompt = e;
       
-      // Hiển thị nút bấm Install trên Header & Sidebar
-      document.getElementById('installBtnHeader').style.display = 'flex';
-      document.getElementById('installBtnSidebar').style.display = 'flex';
+      // Kiểm tra nếu người dùng chưa ẩn banner thì mới cho hiển thị lên
+      if (localStorage.getItem('pwa_banner_dismissed') !== 'true') {
+        document.getElementById('pwaInstallBanner').style.display = 'flex';
+      }
     });
 
     function installPWA() {
@@ -445,24 +509,25 @@
         deferredPrompt.prompt();
         deferredPrompt.userChoice.then((choiceResult) => {
           if (choiceResult.outcome === 'accepted') {
-            document.getElementById('installBtnHeader').style.display = 'none';
-            document.getElementById('installBtnSidebar').style.display = 'none';
+            closeInstallBanner();
           }
           deferredPrompt = null;
         });
       }
     }
 
-    // Đăng ký Service Worker bằng Blob URL
+    function closeInstallBanner() {
+      document.getElementById('pwaInstallBanner').style.display = 'none';
+      localStorage.setItem('pwa_banner_dismissed', 'true');
+    }
+
+    // Đăng ký Service Worker vật lý chuẩn chỉnh (Đã chỉnh sửa từ Blob)
     if ('serviceWorker' in navigator) {
-      const swCode = `
-        self.addEventListener('install', (e) => self.skipWaiting());
-        self.addEventListener('activate', (e) => self.clients.claim());
-        self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request)));
-      `;
-      const blob = new Blob([swCode], { type: 'text/javascript' });
-      const swUrl = URL.createObjectURL(blob);
-      navigator.serviceWorker.register(swUrl).catch(err => console.log('SW registration skipped'));
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((reg) => console.log('Service Worker registered', reg))
+          .catch((err) => console.log('Service Worker failed', err));
+      });
     }
   </script>
 </body>
