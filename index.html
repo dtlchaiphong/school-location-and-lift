@@ -4,6 +4,37 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>DTLC Mobile Hub</title>
+  
+  <!-- CẤU HÌNH PWA / NATIVE APP FOR MOBILE -->
+  <meta name="theme-color" content="#d32f2f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DTLC Mobile">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3448/3448339.png">
+
+  <!-- MANIFEST INLINE (DATA URI) -->
+  <link rel="manifest" href='data:application/manifest+json,{
+    "name": "DTLC Mobile Hub",
+    "short_name": "DTLC Mobile",
+    "start_url": "./",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#d32f2f",
+    "icons": [
+      {
+        "src": "https://cdn-icons-png.flaticon.com/512/3448/3448339.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      },
+      {
+        "src": "https://cdn-icons-png.flaticon.com/512/3448/3448339.png",
+        "sizes": "512x512",
+        "type": "image/png"
+      }
+    ]
+  }'>
+
   <!-- Google Fonts & Font Awesome Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -219,6 +250,21 @@
       color: var(--text-main);
     }
 
+    /* Nút Install PWA trên Header (Tự hiện khi thiết bị hỗ trợ) */
+    .install-pwa-btn {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      background: var(--primary-red);
+      color: #ffffff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
     /* iFrame Display Area */
     .content-area {
       flex: 1;
@@ -290,6 +336,10 @@
 
     <!-- Quick Actions Footer -->
     <div class="sidebar-footer">
+      <button class="action-btn" id="installBtnSidebar" onclick="installPWA()" style="display: none; background: var(--primary-red-light); color: var(--primary-red); border-color: rgba(211, 47, 47, 0.2);">
+        <i class="fa-solid fa-download"></i>
+        <span>Install App to Phone</span>
+      </button>
       <button class="action-btn" onclick="reloadCurrentApp()">
         <i class="fa-solid fa-rotate-right" style="color: var(--primary-red);"></i>
         <span>Refresh Page</span>
@@ -310,6 +360,9 @@
       </button>
       
       <div class="mobile-actions">
+        <button class="install-pwa-btn" id="installBtnHeader" onclick="installPWA()">
+          <i class="fa-solid fa-download"></i> Install App
+        </button>
         <button class="icon-btn-mobile" onclick="reloadCurrentApp()" title="Refresh Page">
           <i class="fa-solid fa-rotate-right"></i>
         </button>
@@ -321,9 +374,7 @@
 
     <!-- iFrame Container Area -->
     <div class="content-area">
-      <!-- App 1: Lift Schedule Mobile -->
       <iframe id="app1" class="tab-iframe active" src="https://script.google.com/macros/s/AKfycbzPYHWYrsi67Y_ccaxWUwyP_Gv1NdWp8fKR7iuWG9ZtIM_tjgqDhX9kOHyl2xaxgM7wLw/exec"></iframe>
-      <!-- App 2: School Location Directory (Lazy Loaded) -->
       <iframe id="app2" class="tab-iframe"></iframe>
     </div>
   </main>
@@ -348,26 +399,20 @@
       activeAppId = tabId;
       activeAppUrl = appUrl;
 
-      // 1. Update active tab state
       document.querySelectorAll('.menu-item').forEach(btn => btn.classList.remove('active'));
       btnElem.classList.add('active');
 
-      // 2. Switch iFrame visibility
       document.querySelectorAll('.tab-iframe').forEach(iframe => iframe.classList.remove('active'));
       const targetIframe = document.getElementById(tabId);
       
-      // Lazy Load: Only set source on first selection
       if (appUrl && !targetIframe.getAttribute('src')) {
         targetIframe.setAttribute('src', appUrl);
       }
       
       targetIframe.classList.add('active');
-
-      // 3. Close sidebar on Mobile selection
       closeSidebar();
     }
 
-    // Reload Active Application
     function reloadCurrentApp() {
       const currentIframe = document.getElementById(activeAppId);
       if (currentIframe && currentIframe.getAttribute('src')) {
@@ -375,11 +420,49 @@
       }
     }
 
-    // Open Application in New Independent Tab
     function openInNewTab() {
       if (activeAppUrl) {
         window.open(activeAppUrl, '_blank');
       }
+    }
+
+    // ==========================================
+    // KHỞI TẠO TÍNH NĂNG CÀI ĐẶT PWA NATIVE
+    // ==========================================
+    let deferredPrompt;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      
+      // Hiển thị nút bấm Install trên Header & Sidebar
+      document.getElementById('installBtnHeader').style.display = 'flex';
+      document.getElementById('installBtnSidebar').style.display = 'flex';
+    });
+
+    function installPWA() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            document.getElementById('installBtnHeader').style.display = 'none';
+            document.getElementById('installBtnSidebar').style.display = 'none';
+          }
+          deferredPrompt = null;
+        });
+      }
+    }
+
+    // Đăng ký Service Worker bằng Blob URL
+    if ('serviceWorker' in navigator) {
+      const swCode = `
+        self.addEventListener('install', (e) => self.skipWaiting());
+        self.addEventListener('activate', (e) => self.clients.claim());
+        self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request)));
+      `;
+      const blob = new Blob([swCode], { type: 'text/javascript' });
+      const swUrl = URL.createObjectURL(blob);
+      navigator.serviceWorker.register(swUrl).catch(err => console.log('SW registration skipped'));
     }
   </script>
 </body>
